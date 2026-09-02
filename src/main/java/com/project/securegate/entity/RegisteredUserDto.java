@@ -3,6 +3,8 @@ package com.project.securegate.entity;
 public class RegisteredUserDto {
     private Long id;
     private String email;
+    public RegisteredUserDto() {
+    }
     public RegisteredUserDto(Long id, String email) {
         this.id = id;
         this.email = email;

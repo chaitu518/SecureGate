@@ -1,10 +1,7 @@
 package com.project.securegate.service;
 
 
-import com.project.securegate.entity.RequestRegisterUserDto;
-import com.project.securegate.entity.User;
-import com.project.securegate.entity.UserLoginDto;
-import com.project.securegate.entity.VerificationToken;
+import com.project.securegate.entity.*;
 import com.project.securegate.exception.UserNotFoundException;
 import com.project.securegate.repository.UserRepository;
 import com.project.securegate.repository.VerificationTokenRepository;
@@ -22,11 +19,13 @@ public class SecureGateService {
     private UserRepository userRepository;
     private VerificationTokenRepository verificationTokenRepository;
     private PasswordEncoder passwordEncoder;
+    private JwtService jwtService;
 
-    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder) {
+    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder,  JwtService jwtService) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public String login(UserLoginDto user) throws UserNotFoundException {
@@ -39,7 +38,12 @@ public class SecureGateService {
         if(!passwordEncoder.matches(user.getPassword(),existingUser.getHashPassword())) {
             throw new UserNotFoundException("Invalid password for email: " + user.getEmail());
         }
-        return "Login successful.";
+        // generate JWT token
+        RegisteredUserDto registeredUserDto = new RegisteredUserDto();
+        registeredUserDto.setEmail(user.getEmail());
+        registeredUserDto.setId(existingUser.getId());
+        String token = jwtService.generateToken(registeredUserDto);
+        return token;
     }
 
     public User registerUser(RequestRegisterUserDto registerUser) {
