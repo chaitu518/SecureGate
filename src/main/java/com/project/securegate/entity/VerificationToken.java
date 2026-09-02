@@ -2,7 +2,6 @@ package com.project.securegate.entity;
 
 import jakarta.persistence.*;
 
-import java.security.Timestamp;
 import java.time.Instant;
 
 @Entity

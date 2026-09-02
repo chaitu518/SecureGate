@@ -1,13 +1,12 @@
 package com.project.securegate.utils;
 
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 public class VerificationTokenUtil{
     public static String generateVerificationCode() {
-        // Generate a random 6-digit verification code
+        // Generate a random UUID verification token
         String token = UUID.randomUUID().toString();
         return token;
     }

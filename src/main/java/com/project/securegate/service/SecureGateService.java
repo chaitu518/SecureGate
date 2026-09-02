@@ -7,6 +7,12 @@ import com.project.securegate.repository.UserRepository;
 import com.project.securegate.repository.VerificationTokenRepository;
 import com.project.securegate.utils.VerificationTokenUtil;
 
+import com.project.securegate.security.AppUserPrincipal;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,30 +26,38 @@ public class SecureGateService {
     private VerificationTokenRepository verificationTokenRepository;
     private PasswordEncoder passwordEncoder;
     private JwtService jwtService;
+    private AuthenticationManager authenticationManager;
 
-    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder,  JwtService jwtService) {
+    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder,  JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
     public String login(UserLoginDto user) throws UserNotFoundException {
-        // check if user exists in repository
-        User existingUser = userRepository.findByEmail(user.getEmail()).orElseThrow(() -> new UserNotFoundException("User not found with email: " + user.getEmail()));
-
-        if (!existingUser.isEnabled()) {
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getEmail(),
+                            user.getPassword()
+                    )
+            );
+        } catch (DisabledException e) {
             throw new UserNotFoundException("User not verified with email: " + user.getEmail());
+        } catch (BadCredentialsException e) {
+            throw new UserNotFoundException("Invalid email or password");
         }
-        if(!passwordEncoder.matches(user.getPassword(),existingUser.getHashPassword())) {
-            throw new UserNotFoundException("Invalid password for email: " + user.getEmail());
-        }
+
+        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+
         // generate JWT token
         RegisteredUserDto registeredUserDto = new RegisteredUserDto();
-        registeredUserDto.setEmail(user.getEmail());
-        registeredUserDto.setId(existingUser.getId());
-        String token = jwtService.generateToken(registeredUserDto);
-        return token;
+        registeredUserDto.setEmail(principal.getUsername());
+        registeredUserDto.setId(principal.getId());
+        return jwtService.generateToken(registeredUserDto);
     }
 
     public User registerUser(RequestRegisterUserDto registerUser) {
