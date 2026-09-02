@@ -1,5 +1,6 @@
 package com.project.securegate.service;
 
+
 import com.project.securegate.entity.RequestRegisterUserDto;
 import com.project.securegate.entity.User;
 import com.project.securegate.entity.UserLoginDto;
@@ -8,6 +9,8 @@ import com.project.securegate.exception.UserNotFoundException;
 import com.project.securegate.repository.UserRepository;
 import com.project.securegate.repository.VerificationTokenRepository;
 import com.project.securegate.utils.VerificationTokenUtil;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,10 +21,12 @@ public class SecureGateService {
 
     private UserRepository userRepository;
     private VerificationTokenRepository verificationTokenRepository;
+    private PasswordEncoder passwordEncoder;
 
-    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository) {
+    public SecureGateService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public String login(UserLoginDto user) throws UserNotFoundException {
@@ -31,7 +36,7 @@ public class SecureGateService {
         if (!existingUser.isEnabled()) {
             throw new UserNotFoundException("User not verified with email: " + user.getEmail());
         }
-        if(!existingUser.getHashPassword().equals(user.getPassword())) {
+        if(!passwordEncoder.matches(user.getPassword(),existingUser.getHashPassword())) {
             throw new UserNotFoundException("Invalid password for email: " + user.getEmail());
         }
         return "Login successful.";
@@ -46,7 +51,7 @@ public class SecureGateService {
         // save to repository;
         User user = new User();
         user.setEmail(registerUser.getEmail());
-        user.setHashPassword(registerUser.getPassword());
+        user.setHashPassword(passwordEncoder.encode(registerUser.getPassword()));
         User user1 = userRepository.save(user);
         //VerificationToken login
         VerificationToken verificationToken = new VerificationToken();
