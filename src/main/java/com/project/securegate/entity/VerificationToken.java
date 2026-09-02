@@ -25,8 +25,6 @@ public class VerificationToken {
     @Column(nullable = false)
     private boolean used;
 
-    @Column(nullable = false)
-    private boolean expired;
 
     public Instant getCreatedAt() {
         return createdAt;

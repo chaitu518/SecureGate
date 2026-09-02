@@ -8,6 +8,7 @@ import com.project.securegate.exception.UserNotFoundException;
 import com.project.securegate.service.SecureGateService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,7 +42,9 @@ public class SecureGateController {
     }
 
     @GetMapping("/status")
+    @PreAuthorize("hasRole('USER')")
     public String getStatus() {
+        //System.out.println("entered into getStatus");
         return "Secure Gate is running.";
     }
 
