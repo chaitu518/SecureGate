@@ -13,6 +13,7 @@ public class User {
     @Column(unique = true)
     private String email;
     private String hashPassword;
+    private boolean enabled;
 
     public User() {
     }
@@ -62,6 +63,11 @@ public class User {
     public String getHashPassword() {
         return hashPassword;
     }
-
+    public boolean isEnabled() {
+        return enabled;
+    }
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
 }
